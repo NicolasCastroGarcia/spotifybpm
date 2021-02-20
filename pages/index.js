@@ -67,7 +67,6 @@ export default function Home() {
 
   async function handleClick() {
     if (userId && !playbacklist && !tracks) {
-      console.log(data.bpm);
       await fetchData(
         `https://api.spotify.com/v1/recommendations?limit=100&target_tempo=${data.bpm}&seed_tracks=0c6xIDDpzE81m2q797ordA`,
         setTracks
