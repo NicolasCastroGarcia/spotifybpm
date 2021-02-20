@@ -40,31 +40,43 @@ export default function Home() {
   }
 
   useEffect(() => {
-    fetchData("https://api.spotify.com/v1/me", setUserId);
-    fetchData(
-      "https://api.spotify.com/v1/recommendations?limit=100&target_tempo=103&seed_tracks=0c6xIDDpzE81m2q797ordA",
-      setTracks
-    );
-
-    postData(
-      `https://api.spotify.com/v1/users/${userId.id}/playlists`,
-      setPlaylist,
-      { name: "test" }
-    );
-    //"6hanyv6rsrMwwsvjCgfrJ6"
-
-    let tracksUris = [];
-    if (tracks) {
-      tracksUris = tracks.tracks.map(track => {
-        return track.uri;
-      });
+    if (!userId) {
+      fetchData("https://api.spotify.com/v1/me", setUserId);
     }
+
+    if (userId && !playbacklist && !tracks) {
+      fetchData(
+        "https://api.spotify.com/v1/recommendations?limit=100&target_tempo=103&seed_tracks=0c6xIDDpzE81m2q797ordA",
+        setTracks
+      );
+
+      postData(
+        `https://api.spotify.com/v1/users/${userId.id}/playlists`,
+        setPlaylist,
+        { name: "test" }
+      );
+    }
+  }, [userId.id]);
+
+  useEffect(() => {
+    if (tracks) {
+      addTracksToPlaylist();
+    }
+  }, [tracks]);
+
+  async function addTracksToPlaylist() {
+    let tracksUris = [];
+
+    console.log(tracks);
+    tracksUris = tracks.tracks.map(track => {
+      return track.uri;
+    });
     const str = tracksUris.join(",");
-    postData(
+    await postData(
       `https://api.spotify.com/v1/playlists/${playbacklist.id}/tracks?uris=${str}`,
       setTrackList
     );
-  }, [userId.id, playbacklist.id]);
+  }
 
   return (
     <div className={styles.container}>
