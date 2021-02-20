@@ -14,6 +14,8 @@ export default function Home() {
   const [playbacklist, setPlaylist] = useState(false);
   const [trackList, setTrackList] = useState(false);
 
+  const [data, setData] = useState({ name: "Nombre", bpm: 100 });
+
   async function fetchData(url, setter) {
     const getData = await fetch(url, {
       headers: {
@@ -36,38 +38,23 @@ export default function Home() {
     });
     const json = await postData.json();
     setter(json);
-    console.log(json, 1234);
   }
 
   useEffect(() => {
     if (!userId) {
       fetchData("https://api.spotify.com/v1/me", setUserId);
     }
-
-    if (userId && !playbacklist && !tracks) {
-      fetchData(
-        "https://api.spotify.com/v1/recommendations?limit=100&target_tempo=103&seed_tracks=0c6xIDDpzE81m2q797ordA",
-        setTracks
-      );
-
-      postData(
-        `https://api.spotify.com/v1/users/${userId.id}/playlists`,
-        setPlaylist,
-        { name: "test" }
-      );
-    }
   }, [userId.id]);
 
   useEffect(() => {
-    if (tracks) {
+    if (tracks && playbacklist?.id) {
       addTracksToPlaylist();
     }
-  }, [tracks]);
+  }, [tracks, playbacklist.id, data.bpm]);
 
   async function addTracksToPlaylist() {
     let tracksUris = [];
 
-    console.log(tracks);
     tracksUris = tracks.tracks.map(track => {
       return track.uri;
     });
@@ -76,6 +63,26 @@ export default function Home() {
       `https://api.spotify.com/v1/playlists/${playbacklist.id}/tracks?uris=${str}`,
       setTrackList
     );
+  }
+
+  async function handleClick() {
+    if (userId && !playbacklist && !tracks) {
+      console.log(data.bpm);
+      await fetchData(
+        `https://api.spotify.com/v1/recommendations?limit=100&target_tempo=${data.bpm}&seed_tracks=0c6xIDDpzE81m2q797ordA`,
+        setTracks
+      );
+
+      await postData(
+        `https://api.spotify.com/v1/users/${userId.id}/playlists`,
+        setPlaylist,
+        { name: data.name }
+      );
+    }
+  }
+
+  function handleChange(e) {
+    setData({ ...data, [e.target.name]: e.target.value });
   }
 
   return (
@@ -92,6 +99,19 @@ export default function Home() {
         >
           Necesito tu data gil
         </a>
+        <input
+          type="number"
+          name="bpm"
+          onChange={handleChange}
+          defaultValue={data.bpm}
+        />
+        <input
+          type="text"
+          name="name"
+          onChange={handleChange}
+          defaultValue={data.name}
+        />
+        <button onClick={handleClick}>Generar playlist</button>
       </main>
     </div>
   );
